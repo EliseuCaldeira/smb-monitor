@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SMB-Monitor</title>
+<link rel="shortcut icon" href="favicon.ico">
+<link rel="stylesheet" href="bootstrap.css">
+<link rel="stylesheet" href="default.css">
+<script src="jquery.js"></script>
+<script src="bootstrap.js"></script>
+</head>
+<body onload="main();">
+<p></p>
+<!--Page header-->
+<div style="width: 1200px; margin: 0 auto;" class="p-3 mb-2 bg-secondary text-white shadow rounded">
+	<h1 class="text-center">SMB-Monitor</h1>
+<!--Search bar-->
+	<div class="container text-start bg-dark text-white shadow-sm rounded">
+		<h3>Filters</h3>
+		<div class="row row-cols-2">
+			<div class="col">☁️ Server:</div>
+			<div class="col">💿 Share name:</div>
+			<div class="col">
+				<select name="share_host" id="share_host" class="form-select" aria-label="Select server" onchange="update_state();reset_share_name()">
+					<option value="" selected>♾️ All servers</option>
+					<option id="share_host_loading" disabled>Loading…</option>
+				</select>
+			</div>
+			<div class="col">
+				<select name="share_name" id="share_name" class="form-select" aria-label="Select shared folder" onchange="update_state()">
+					<option value="" selected>♾️ All available shares</option>
+				</select>
+			</div>
+			<div class="col">⏳ Time span:</div>
+			<div class="col">👨🏼‍💻 User:</div>
+			<div class="col">
+				<select name="time_span" id="time_span" class="form-select" aria-label="Select time span" onchange="update_state()">
+					<option value="10m" selected>&lt; 10 Minutes ago ⏱️</option>
+					<option value="1h">&lt; 1 Hour ago 🕐</option>
+					<option value="1d">&lt; 1 Day ago 🌤️</option>
+					<option value="1w">&lt; 1 Week ago 📅</option>
+					<option value="1M">&lt; 1 Month ago 🌙</option>
+					<option value="0">♾️🦕 All time 🦖♾️</option>
+				</select>
+			</div>
+			<div class="col">
+				<input name="user_search" id="user_search" type="text" class="form-control" placeholder="username | @hostname | (IP)" oninput="update_state()">
+			</div>
+		</div>
+		<div class="row row-cols-2">
+				<div class="col">↕️ Order results by:</div>
+				<div class="col">
+					&nbsp;
+				</div>
+				<div class="col">
+					<button name="time_order_btn" id="time_order_btn" type="button" class="btn btn-info w-100" onclick="toggle_time_order()">🔻 Most recent first</button>
+					<input type="hidden" name="time_order" id="time_order" value="DESC">
+				</div>
+				<div class="col">
+					<button type="button" class="btn btn-outline-danger w-100" onclick="clear_filters()">🗑️ Reset search and filters</button>
+				</div>
+		</div><br />
+	</div>
+<!--Result table title-->
+	<div class="col">
+		📁/📄 Search file or folder by name or path:<br>
+		<input name="node_search" id="node_search" type="text" class="form-control" placeholder="Path/to/node or just file name" oninput="update_state()">
+	</div>
+	<p>
+		👉🏻 % is a wildcard. Use it to mean any sequence of characters.<br />
+		👉🏻 _ is a special wildcard that means exactly one character.
+	</p>
+	<div class="d-flex gap-3">
+		<!--Toggle pause button-->
+		<button name="toggle_refresh" id="toggle_refresh" type="button" class="btn btn-success" onclick="toggle_refresh_thread()">⏸️ Pause</button>
+		<div id="refresh_status" class="h3">🔴 Live</div>
+	</div>
+	<h4 id="results_title">No events to show.</h4>
+	<div id="results_div"></div>
+<script src="main.js"></script>
+<noscript>JavaScript is disabled!</noscript>
+</body>
+</html>
