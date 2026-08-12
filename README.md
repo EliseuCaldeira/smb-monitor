@@ -25,6 +25,7 @@ KillSignal=SIGINT
 [Install]
 WantedBy=multi-user.target
 ```
+Be sure to replace /home/user/smb-monitor in both lines with the path where you actually placed it.
 
 Then, enable the service with:  
 	sudo systemctl enable smb-monitor.service  
