@@ -32,5 +32,7 @@ Start it with:
 	sudo systemctl start smb-monitor.service  
 To check its status:  
 	sudo systemctl status smb-monitor.service  
+
   
-There is also a a Windows app that monitors directory activity and writes a file in the same style as a Samba Audit
+There is also a Windows app that monitors directory activity and writes a log file in the same style as a Samba Audit  
+For convenience, you can use PyInstaller to create a one-file executable, then add it to Task Scheduler to have it run automatically.
