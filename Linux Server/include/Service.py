@@ -435,7 +435,7 @@ INNER JOIN Nodes ON Events.node1_id = Nodes.node_id
 WHERE Events.event_type = 0
 AND Events.utc_timestamp > ?;""",
 			params = (
-				time_limit
+				time_limit,
 			)
 		)
 		excessive_unlinks = []
@@ -535,7 +535,7 @@ WHERE Events.event_type = 2
 AND Nodes1.node_name = Nodes2.node_name
 AND Events.utc_timestamp > ?;""",
 			params = (
-				time_limit
+				time_limit,
 			)
 		)
 		excessive_moves = []
@@ -631,7 +631,7 @@ FROM Events
 WHERE Events.event_type = 0
 AND Events.utc_timestamp > ?;""",
 				params = (
-					time_limit
+					time_limit,
 				)
 			)[0][r"total"]
 			# Send general unlik count report to zabbix:
@@ -662,7 +662,7 @@ WHERE Events.event_type = 2
 AND Nodes1.node_name = Nodes2.node_name
 AND Events.utc_timestamp > ?;""",
 				params = (
-					time_limit
+					time_limit,
 				)
 			)[0][r"total"]
 			# Send general move count report to zabbix:
@@ -693,7 +693,7 @@ WHERE Events.event_type = 2
 AND Nodes1.node_name != Nodes2.node_name
 AND Events.utc_timestamp > ?;""",
 				params = (
-					time_limit
+					time_limit,
 				)
 			)[0][r"total"]
 			# Send general rename count report to zabbix:
@@ -721,7 +721,7 @@ FROM Events
 WHERE Events.event_type = 1
 AND Events.utc_timestamp > ?;""",
 				params = (
-					time_limit
+					time_limit,
 				)
 			)[0][r"total"]
 			# Send general mkdir count report to zabbix:

@@ -115,8 +115,8 @@ INNER JOIN Shares ON Events.share_id = Shares.share_id
 INNER JOIN Nodes Nodes1 ON Events.node1_id = Nodes1.node_id
 LEFT OUTER JOIN Nodes Nodes2 ON Events.node2_id = Nodes2.node_id
 """
-		# initialize params tuple
-		params = ()
+		# initialize params list
+		params = []
 		# To know if it's the first condition. If False, it is prefixed with an "AND ":
 		first_filter = True
 		# Initialize the content of the response:
@@ -138,7 +138,7 @@ LEFT OUTER JOIN Nodes Nodes2 ON Events.node2_id = Nodes2.node_id
 			time_limit = int(datetime_limit.timestamp())
 		# time_limit
 		if time_limit > 0:
-			query_string += r"WHERE Events.utc_timestamp > ?\n"
+			query_string += "WHERE Events.utc_timestamp > ?\n"
 			params.append(time_limit)
 			first_filter = False
 		# Interpret user_search:
@@ -149,7 +149,7 @@ LEFT OUTER JOIN Nodes Nodes2 ON Events.node2_id = Nodes2.node_id
 				query_string += r"AND "
 			else:
 				query_string += r"WHERE "
-			query_string += r"Users.user_name LIKE ?\n"
+			query_string += "Users.user_name LIKE ?\n"
 			params.append(user_name)
 			first_filter = False
 		# user_host
@@ -158,7 +158,7 @@ LEFT OUTER JOIN Nodes Nodes2 ON Events.node2_id = Nodes2.node_id
 				query_string += r"AND "
 			else:
 				query_string += r"WHERE "
-			query_string += r"Users.user_host LIKE ?\n"
+			query_string += "Users.user_host LIKE ?\n"
 			params.append(user_host)
 			first_filter = False
 		# user_ip
@@ -167,7 +167,7 @@ LEFT OUTER JOIN Nodes Nodes2 ON Events.node2_id = Nodes2.node_id
 				query_string += r"AND "
 			else:
 				query_string += r"WHERE "
-			query_string += r"Users.user_ip LIKE ?\n"
+			query_string += "Users.user_ip LIKE ?\n"
 			params.append(user_ip)
 			first_filter = False
 		# share_host
@@ -176,7 +176,7 @@ LEFT OUTER JOIN Nodes Nodes2 ON Events.node2_id = Nodes2.node_id
 				query_string += r"AND "
 			else:
 				query_string += r"WHERE "
-			query_string += r"Shares.share_host = ?\n"
+			query_string += "Shares.share_host = ?\n"
 			params.append(share_host)
 			first_filter = False
 		# share_name
@@ -185,7 +185,7 @@ LEFT OUTER JOIN Nodes Nodes2 ON Events.node2_id = Nodes2.node_id
 				query_string += r"AND "
 			else:
 				query_string += r"WHERE "
-			query_string += r"Shares.share_name = ?\n"
+			query_string += "Shares.share_name = ?\n"
 			params.append(share_name)
 			first_filter = False
 		# Parse node_search:
@@ -204,7 +204,7 @@ LEFT OUTER JOIN Nodes Nodes2 ON Events.node2_id = Nodes2.node_id
 				query_string += r"AND "
 			else:
 				query_string += r"WHERE "
-			query_string += r"(Nodes1.node_path LIKE ? OR Nodes2.node_path LIKE ?)\n"
+			query_string += "(Nodes1.node_path LIKE ? OR Nodes2.node_path LIKE ?)\n"
 			params.append(node_path)
 			params.append(node_path)
 			first_filter = False
@@ -214,7 +214,7 @@ LEFT OUTER JOIN Nodes Nodes2 ON Events.node2_id = Nodes2.node_id
 				query_string += r"AND "
 			else:
 				query_string += r"WHERE "
-			query_string += r"(Nodes1.node_name LIKE ? OR Nodes2.node_name LIKE ?)\n"
+			query_string += "(Nodes1.node_name LIKE ? OR Nodes2.node_name LIKE ?)\n"
 			params.append(node_name)
 			params.append(node_name)
 			first_filter = False
@@ -222,11 +222,11 @@ LEFT OUTER JOIN Nodes Nodes2 ON Events.node2_id = Nodes2.node_id
 		if time_order is not None and len(time_order) > 0:
 			# ASC or DESC (ASC is the SQLite default behavior; DESC is this App's default behavior)
 			if time_order == "ASC":
-				query_string += r"ORDER BY Events.utc_timestamp ASC\n"
+				query_string += "ORDER BY Events.utc_timestamp ASC\n"
 			else:
-				query_string += r"ORDER BY Events.utc_timestamp DESC\n"
+				query_string += "ORDER BY Events.utc_timestamp DESC\n"
 		else:
-			query_string += r"ORDER BY Events.utc_timestamp DESC\n"
+			query_string += "ORDER BY Events.utc_timestamp DESC\n"
 		# LIMIT
 		query_string += r"LIMIT 1000;"
 		# Query DB:
