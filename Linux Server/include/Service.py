@@ -138,13 +138,14 @@ class Service:
 		log.debug("Loading audit files to memory...")
 		# First, add new found audit files to the database:
 		for key, value in self.audits.items():
-			query_string = f"""--sql
+			query_string = r"""--sql
 INSERT INTO Audit_Files(file_path, line_number)
-VALUES ("{value[0]}", 1)
+VALUES (?, 1)
 ON CONFLICT(file_path) DO NOTHING;"""
-			db.query(query_string)
+			params = (value[0],)
+			db.query(query_string, params)
 		# Then, query database for all audit_files stored:
-		query_string = """--sql
+		query_string = r"""--sql
 SELECT * FROM Audit_Files;"""
 		result = db.query(query_string)
 		# Temporary list of audit files:
@@ -224,13 +225,14 @@ SELECT * FROM Audit_Files;"""
 				line_number = 1
 				first_line = r"new file"
 			# Update Audit_Files table in DB:
-			query_string = f"""--sql
+			query_string = r"""--sql
 UPDATE Audit_Files SET
-line_number = {line_number},
-first_line = "{first_line}"
-WHERE file_path = "{audit_file.file_path}";"""
+line_number = ?,
+first_line = ?
+WHERE file_path = ?;"""
+			params = (line_number, first_line, audit_file.file_path)
 			#log.debug(f"query_string:\n{query_string}")
-			db.query(query_string)
+			db.query(query_string, params)
 
 	def read_audits(self, db):
 		# For each audit_file:
@@ -270,68 +272,120 @@ WHERE file_path = "{audit_file.file_path}";"""
 				):
 					# Process event:
 					# 1st, store the user and retrieve its id
-					db.query(f"""--sql
+					db.query(r"""--sql
 INSERT INTO Users(user_name, user_host, user_ip)
-VALUES ("{event.user_name}", "{event.user_host}", "{event.user_ip}")
-ON CONFLICT(user_name, user_host, user_ip) DO NOTHING;"""
+VALUES (?, ?, ?)
+ON CONFLICT(user_name, user_host, user_ip) DO NOTHING;""",
+						params = (
+							event.user_name,
+							event.user_host,
+							event.user_ip
+						)
 					)
-					user_id = db.query(f"""--sql
+					user_id = db.query(r"""--sql
 SELECT user_id FROM Users
-WHERE user_name="{event.user_name}"
-AND user_host="{event.user_host}"
-AND user_ip="{event.user_ip}";"""
+WHERE user_name=?
+AND user_host=?
+AND user_ip=?""",
+						params = (
+							event.user_name,
+							event.user_host,
+							event.user_ip
+						)
 					)[0][r"user_id"]
 
 					# 2nd, store the share and retrieve its id
-					db.query(f"""--sql
+					db.query(r"""--sql
 INSERT INTO Shares(share_name, share_host, share_path)
-VALUES ("{event.share_name}", "{event.share_host}", "{event.share_path}")
-ON CONFLICT(share_name, share_host) DO NOTHING;"""
+VALUES (?, ?, ?)
+ON CONFLICT(share_name, share_host) DO NOTHING;""",
+						params = (
+							event.share_name,
+							event.share_host,
+							event.share_path
+						)
 					)
-					share_id = db.query(f"""--sql
+					share_id = db.query(r"""--sql
 SELECT share_id FROM Shares
-WHERE share_name="{event.share_name}"
-AND share_host="{event.share_host}";"""
+WHERE share_name=?
+AND share_host=?""",
+						params = (
+							event.share_name,
+							event.share_host
+						)
 					)[0][r"share_id"]
 
 					# 3rd, store list of nodes and retrieve their id's:
 					for path, name in event.node1_list:
-						db.query(f"""--sql
+						db.query(r"""--sql
 INSERT INTO Nodes(node_path, share_id, node_name)
-VALUES ("{path}", {share_id}, "{name}")
-ON CONFLICT(node_path, share_id) DO NOTHING;"""
+VALUES (?, ?, ?)
+ON CONFLICT(node_path, share_id) DO NOTHING;""",
+							params = (
+								path,
+								share_id,
+								name
+							)
 						)
 					path, _ = event.node1_list[-1]
 					#log.debug(f"path = \"{path}\", share_id = {share_id}")
-					node1_id = db.query(f"""--sql
+					node1_id = db.query(r"""--sql
 SELECT node_id FROM Nodes
-WHERE node_path="{path}"
-AND share_id={share_id};"""
+WHERE node_path=?
+AND share_id=?""",
+						params = (
+							path,
+							share_id
+						)
 					)[0][r"node_id"]
 					# In case there is a second node:
 					if event.node2_list is not None:
 						for path, name in event.node2_list:
-							db.query(f"""--sql
+							db.query(r"""--sql
 INSERT INTO Nodes(node_path, share_id, node_name)
-VALUES ("{path}", {share_id}, "{name}")
-ON CONFLICT(node_path, share_id) DO NOTHING;"""
+VALUES (?, ?, ?)
+ON CONFLICT(node_path, share_id) DO NOTHING;""",
+								params = (
+									path,
+									share_id,
+									name
+								)
 							)
 						path, _ = event.node2_list[-1]
-						node2_id = db.query(f"""--sql
+						node2_id = db.query(r"""--sql
 SELECT node_id FROM Nodes
-WHERE node_path="{path}"
-AND share_id={share_id};"""
+WHERE node_path=?
+AND share_id=?""",
+							params = (
+								path,
+								share_id
+							)
 						)[0][r"node_id"]
 						# 4th, store event with 2 nodes:
-						db.query(f"""--sql
+						db.query(r"""--sql
 INSERT INTO Events(user_id, share_id, node1_id, node2_id, utc_timestamp, event_type)
-VALUES ({user_id}, {share_id}, {node1_id}, {node2_id}, {event.utc_timestamp}, {event.event_type});"""
+VALUES (?, ?, ?, ?, ?, ?);""",
+							params = (
+								user_id,
+								share_id,
+								node1_id,
+								node2_id,
+								event.utc_timestamp,
+								event.event_type
+							)
 						)
 					else:
 						# 4th, store event with single node:
-						db.query(f"""--sql
+						db.query(r"""--sql
 INSERT INTO Events(user_id, share_id, node1_id, utc_timestamp, event_type)
-VALUES ({user_id}, {share_id}, {node1_id}, {event.utc_timestamp}, {event.event_type});"""
+VALUES (?, ?, ?, ?, ?);""",
+							params = (
+								user_id,
+								share_id,
+								node1_id,
+								event.utc_timestamp,
+								event.event_type
+							)
 						)
 				
 				# Stop reading new lines:
@@ -339,11 +393,16 @@ VALUES ({user_id}, {share_id}, {node1_id}, {event.utc_timestamp}, {event.event_t
 					break
 			
 			# Update Audit_Files table:
-			db.query(f"""--sql
+			db.query(r"""--sql
 UPDATE Audit_Files SET
-line_number = {audit_file.line_number},
-first_line = "{audit_file.first_line}"
-WHERE file_path = "{audit_file.file_path}";"""
+line_number = ?,
+first_line = ?
+WHERE file_path = ?;""",
+				params = (
+					audit_file.line_number,
+					audit_file.first_line,
+					audit_file.file_path
+				)
 			)
 
 
@@ -357,7 +416,7 @@ WHERE file_path = "{audit_file.file_path}";"""
 			if alert["utc_timestamp"] < cooldown:
 				self.alerts_sent_on_excessive_unlinks.remove(alert)
 		# Gather info about all recent excessive unlinks:
-		result = db.query(f"""--sql
+		result = db.query(r"""--sql
 SELECT
 	Users.user_id,
 	Users.user_name,
@@ -374,7 +433,10 @@ INNER JOIN Users ON Events.user_id = Users.user_id
 INNER JOIN Shares ON Events.share_id = Shares.share_id
 INNER JOIN Nodes ON Events.node1_id = Nodes.node_id
 WHERE Events.event_type = 0
-AND Events.utc_timestamp > {time_limit};"""
+AND Events.utc_timestamp > ?;""",
+			params = (
+				time_limit
+			)
 		)
 		excessive_unlinks = []
 		for row in result:
@@ -449,7 +511,7 @@ AND Events.utc_timestamp > {time_limit};"""
 			if alert["utc_timestamp"] < cooldown:
 				self.alerts_sent_on_excessive_moves.remove(alert)
 		# Gather info about all recent excessive moves:
-		result = db.query(f"""--sql
+		result = db.query(r"""--sql
 SELECT
 	Users.user_id,
 	Users.user_name,
@@ -471,7 +533,10 @@ INNER JOIN Nodes Nodes1 ON Events.node1_id = Nodes1.node_id
 LEFT OUTER JOIN Nodes Nodes2 ON Events.node2_id = Nodes2.node_id
 WHERE Events.event_type = 2
 AND Nodes1.node_name = Nodes2.node_name
-AND Events.utc_timestamp > {time_limit};"""
+AND Events.utc_timestamp > ?;""",
+			params = (
+				time_limit
+			)
 		)
 		excessive_moves = []
 		for row in result:
@@ -560,11 +625,15 @@ AND Events.utc_timestamp > {time_limit};"""
 		# Give general report:
 		if self.zabbix_this_host is not None:
 			# unlik count:
-			unlinks = db.query(f"""--sql
+			unlinks = db.query(r"""--sql
 SELECT count(*) AS total
 FROM Events
 WHERE Events.event_type = 0
-AND Events.utc_timestamp > {time_limit};""")[0][r"total"]
+AND Events.utc_timestamp > ?;""",
+				params = (
+					time_limit
+				)
+			)[0][r"total"]
 			# Send general unlik count report to zabbix:
 			try:
 				result = subprocess.run(
@@ -584,14 +653,18 @@ AND Events.utc_timestamp > {time_limit};""")[0][r"total"]
 			except Exception as e:
 				log.error(f"Error sending Zabbix report: {e}")
 			# move count:
-			moves = db.query(f"""--sql
+			moves = db.query(r"""--sql
 SELECT count(*) AS total
 FROM Events
 INNER JOIN Nodes Nodes1 ON Events.node1_id = Nodes1.node_id
 LEFT OUTER JOIN Nodes Nodes2 ON Events.node2_id = Nodes2.node_id
 WHERE Events.event_type = 2
 AND Nodes1.node_name = Nodes2.node_name
-AND Events.utc_timestamp > {time_limit};""")[0][r"total"]
+AND Events.utc_timestamp > ?;""",
+				params = (
+					time_limit
+				)
+			)[0][r"total"]
 			# Send general move count report to zabbix:
 			try:
 				result = subprocess.run(
@@ -611,14 +684,18 @@ AND Events.utc_timestamp > {time_limit};""")[0][r"total"]
 			except Exception as e:
 				log.error(f"Error sending Zabbix report: {e}")
 			# rename count:
-			renames = db.query(f"""--sql
+			renames = db.query(r"""--sql
 SELECT count(*) AS total
 FROM Events
 INNER JOIN Nodes Nodes1 ON Events.node1_id = Nodes1.node_id
 LEFT OUTER JOIN Nodes Nodes2 ON Events.node2_id = Nodes2.node_id
 WHERE Events.event_type = 2
 AND Nodes1.node_name != Nodes2.node_name
-AND Events.utc_timestamp > {time_limit};""")[0][r"total"]
+AND Events.utc_timestamp > ?;""",
+				params = (
+					time_limit
+				)
+			)[0][r"total"]
 			# Send general rename count report to zabbix:
 			try:
 				result = subprocess.run(
@@ -638,11 +715,15 @@ AND Events.utc_timestamp > {time_limit};""")[0][r"total"]
 			except Exception as e:
 				log.error(f"Error sending Zabbix report: {e}")
 			# mkdir count:
-			mkdirs = db.query(f"""--sql
+			mkdirs = db.query(r"""--sql
 SELECT count(*) AS total
 FROM Events
 WHERE Events.event_type = 1
-AND Events.utc_timestamp > {time_limit};""")[0][r"total"]
+AND Events.utc_timestamp > ?;""",
+				params = (
+					time_limit
+				)
+			)[0][r"total"]
 			# Send general mkdir count report to zabbix:
 			try:
 				result = subprocess.run(
@@ -663,7 +744,7 @@ AND Events.utc_timestamp > {time_limit};""")[0][r"total"]
 				log.error(f"Error sending Zabbix report: {e}")
 		
 		# Send per Share.host report:
-		hosts = db.query("""--sql
+		hosts = db.query(r"""--sql
 SELECT DISTINCT share_host
 FROM Shares;""")
 		share_host_rows = []
@@ -675,13 +756,18 @@ FROM Shares;""")
 		for host in share_host_rows:
 			host = host["share_host"]
 			# unlik count:
-			unlinks = db.query(f"""--sql
+			unlinks = db.query(r"""--sql
 SELECT count(*) AS total
 FROM Events
 INNER JOIN Shares ON Events.share_id = Shares.share_id
 WHERE Events.event_type = 0
-AND Shares.share_host = "{host}"
-AND Events.utc_timestamp > {time_limit};""")[0][r"total"]
+AND Shares.share_host = ?
+AND Events.utc_timestamp > ?;""",
+				params = (
+					host,
+					time_limit
+				)
+			)[0][r"total"]
 			# Send per Share.host unlik count report to zabbix:
 			try:
 				result = subprocess.run(
@@ -699,16 +785,21 @@ AND Events.utc_timestamp > {time_limit};""")[0][r"total"]
 				)
 			except Exception as e:
 				log.error(f"Error sending Zabbix report: {e}")
-			moves = db.query(f"""--sql
+			moves = db.query(r"""--sql
 SELECT count(*) AS total
 FROM Events
 INNER JOIN Shares ON Events.share_id = Shares.share_id
 INNER JOIN Nodes Nodes1 ON Events.node1_id = Nodes1.node_id
 LEFT OUTER JOIN Nodes Nodes2 ON Events.node2_id = Nodes2.node_id
 WHERE Events.event_type = 2
-AND Shares.share_host = "{host}"
+AND Shares.share_host = ?
 AND Nodes1.node_name = Nodes2.node_name
-AND Events.utc_timestamp > {time_limit};""")[0][r"total"]
+AND Events.utc_timestamp > ?;""",
+				params = (
+					host,
+					time_limit
+				)
+			)[0][r"total"]
 			# Send per Share.host move count report to zabbix:
 			try:
 				result = subprocess.run(
@@ -727,16 +818,21 @@ AND Events.utc_timestamp > {time_limit};""")[0][r"total"]
 			except Exception as e:
 				log.error(f"Error sending Zabbix report: {e}")
 			# rename count:
-			renames = db.query(f"""--sql
+			renames = db.query(r"""--sql
 SELECT count(*) AS total
 FROM Events
 INNER JOIN Shares ON Events.share_id = Shares.share_id
 INNER JOIN Nodes Nodes1 ON Events.node1_id = Nodes1.node_id
 LEFT OUTER JOIN Nodes Nodes2 ON Events.node2_id = Nodes2.node_id
 WHERE Events.event_type = 2
-AND Shares.share_host = "{host}"
+AND Shares.share_host = ?
 AND Nodes1.node_name != Nodes2.node_name
-AND Events.utc_timestamp > {time_limit};""")[0][r"total"]
+AND Events.utc_timestamp > ?;""",
+				params = (
+					host,
+					time_limit
+				)
+			)[0][r"total"]
 			# Send per Share.host rename count report to zabbix:
 			try:
 				result = subprocess.run(
@@ -755,13 +851,18 @@ AND Events.utc_timestamp > {time_limit};""")[0][r"total"]
 			except Exception as e:
 				log.error(f"Error sending Zabbix report: {e}")
 			# mkdir count:
-			mkdirs = db.query(f"""--sql
+			mkdirs = db.query(r"""--sql
 SELECT count(*) AS total
 FROM Events
 INNER JOIN Shares ON Events.share_id = Shares.share_id
 WHERE Events.event_type = 1
-AND Shares.share_host = "{host}"
-AND Events.utc_timestamp > {time_limit};""")[0][r"total"]
+AND Shares.share_host = ?
+AND Events.utc_timestamp > ?;""",
+				params = (
+					host,
+					time_limit
+				)
+			)[0][r"total"]
 			# Send per Share.host mkdir count report to zabbix:
 			try:
 				result = subprocess.run(

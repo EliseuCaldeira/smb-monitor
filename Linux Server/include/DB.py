@@ -23,14 +23,14 @@ class DB:
 		#log.debug(f"DB connection closed in thread id {threading.current_thread().ident}")
 
 
-	def query(self, query_string):
+	def query(self, query_string, params=()):
 		result = None
 		self.cursor.execute('BEGIN')
 		try:
-			result = self.cursor.execute(query_string).fetchall()
+			result = self.cursor.execute(query_string, params).fetchall()
 		except Exception as e:
 			self.connection.rollback()
-			log.error(f"Error executing query:\n{query_string}\n{traceback.format_exc()}")
+			log.error(f"Error executing query:\n{query_string}\nparams: {params}\n{traceback.format_exc()}")
 			#Do not raise
 		else:
 			self.connection.commit()
