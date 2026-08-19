@@ -1,0 +1,8 @@
+# Ignore:
+.git/
+.env/
+.idea/
+.vscode/
+.agent/
+.antigravity/
+.secrets/
