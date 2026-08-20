@@ -2,6 +2,7 @@ import traceback
 import logging
 log = logging.getLogger('root')
 
+import html
 import smtplib, ssl
 from email.message import EmailMessage
 
@@ -50,14 +51,14 @@ class Email:
 		email_body: str = r""
 		if self.email_type == r"unlink":
 			email_subject += r"Excess of Unlinks"
-			nodes_html = "".join([f"<li>{node}</li>" for node in self.node1_path_list])
+			nodes_html = "".join([f"<li>{html.escape(node)}</li>" for node in self.node1_path_list])
 			email_body += f"""
 <!DOCTYPE html>
 <html>
 <body>
 	<h2>Excess of Unlinks detected</h2>
-	<p><b>User:</b> 👨🏼‍💻{self.user_name}@{self.user_host}({self.user_ip})</p>
-	<p><b>Share:</b> ☁️{self.share_host} 💿{self.share_name}</p>
+	<p><b>User:</b> 👨🏼‍💻{html.escape(self.user_name)}@{html.escape(self.user_host)}({html.escape(self.user_ip)})</p>
+	<p><b>Share:</b> ☁️{html.escape(self.share_host)} 💿{html.escape(self.share_name)}</p>
 	<p><b>Nodes deleted ({len(self.node1_path_list)}):</b></p>
 	<ul>
 		{nodes_html}
@@ -67,15 +68,15 @@ class Email:
 """
 		elif self.email_type == r"move":
 			email_subject += r"Excess of Moves"
-			nodes1_html = "".join([f"<li>{node}</li>" for node in self.node1_path_list])
-			nodes2_html = "".join([f"<li>{node}</li>" for node in self.node2_path_list])
+			nodes1_html = "".join([f"<li>{html.escape(node)}</li>" for node in self.node1_path_list])
+			nodes2_html = "".join([f"<li>{html.escape(node)}</li>" for node in self.node2_path_list])
 			email_body += f"""
 <!DOCTYPE html>
 <html>
 <body>
 	<h2>Excess of Moves detected</h2>
-	<p><b>User:</b> 👨🏼‍💻{self.user_name}@{self.user_host}({self.user_ip})</p>
-	<p><b>Share:</b> ☁️{self.share_host} 💿{self.share_name}</p>
+	<p><b>User:</b> 👨🏼‍💻{html.escape(self.user_name)}@{html.escape(self.user_host)}({html.escape(self.user_ip)})</p>
+	<p><b>Share:</b> ☁️{html.escape(self.share_host)} 💿{html.escape(self.share_name)}</p>
 	<p><b>Nodes deleted ({len(self.node1_path_list)}):</b></p>
 	<ul>
 		{nodes1_html}
